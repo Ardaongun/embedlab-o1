@@ -1,4 +1,9 @@
-import { createTag, getTagsByOrganization, updateTag } from "../services/tag.service.js";
+import {
+  createTag,
+  deleteTag,
+  getTagsByOrganization,
+  updateTag,
+} from "../services/tag.service.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import Response from "../utils/response.js";
 
@@ -36,4 +41,13 @@ export const updateTagHandler = withErrorHandling(async (req, res) => {
 
   await updateTag(tagId, name.trim(), req.user.organizationId);
   return Response.success(null, "Tag updated successfully.").send(res);
+});
+
+export const deleteTagHandler = withErrorHandling(async (req, res) => {
+  const { tagId } = req.params;
+  if (!tagId) {
+    return Response.badRequest("Tag ID is required.").send(res);
+  }
+  await deleteTag(tagId, req.user.organizationId);
+  return Response.success(null, "Tag deleted successfully.").send(res);
 });

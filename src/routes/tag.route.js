@@ -23,4 +23,10 @@ router.put(
   tagController.updateTagHandler
 );
 
+router.delete(
+  "/delete-tag/:tagId",
+  authorizeMiddleware(ROLES.ORGANIZATION),
+  tagController.deleteTagHandler
+);
+
 export default router;

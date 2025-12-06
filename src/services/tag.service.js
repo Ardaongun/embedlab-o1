@@ -1,6 +1,7 @@
 import { getOrganizationByIdDB } from "../repositories/organizations.repository.js";
 import {
   createTagDB,
+  deleteTagByIdDB,
   getAllTagsDB,
   getTagByIdDB,
   updateTagByIdDB,
@@ -60,3 +61,17 @@ export const updateTag = withErrorHandling(
     });
   }
 );
+
+export const deleteTag = withErrorHandling(async (tagId, organizationId) => {
+  const existingOrg = await getOrganizationByIdDB(organizationId, { _id: 1 });
+  if (!existingOrg) {
+    throw ApiError.badRequest("Organization does not exist.");
+  }
+
+  const existingTag = await getTagByIdDB(tagId);
+  if (!existingTag || existingTag.organizationId !== organizationId) {
+    throw ApiError.badRequest("Tag does not exist in the organization.");
+  }
+
+  await deleteTagByIdDB(tagId);
+});
