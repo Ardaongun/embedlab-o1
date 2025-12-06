@@ -77,6 +77,7 @@ export const registerOrganization = withErrorHandling(
       password: await bcrypt.hash(password, 10),
       role: ROLES.ORGANIZATION,
       organizationId,
+      lookupKey: null,
       refreshToken: null,
       refreshTokenExpiry: null,
       createdAt: new Date(),
