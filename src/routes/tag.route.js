@@ -5,12 +5,22 @@ import { ROLES } from "../config/role.config.js";
 
 const router = express.Router();
 
-router.get("/get-tags", tagController.getTagsByOrganizationHandler);
+router.get(
+  "/get-tags",
+  authorizeMiddleware(ROLES.ORGANIZATION, ROLES.USER),
+  tagController.getTagsByOrganizationHandler
+);
 
 router.post(
   "/create-tag",
   authorizeMiddleware(ROLES.ORGANIZATION),
   tagController.createTagHandler
+);
+
+router.put(
+  "/update-tag/:tagId",
+  authorizeMiddleware(ROLES.ORGANIZATION),
+  tagController.updateTagHandler
 );
 
 export default router;

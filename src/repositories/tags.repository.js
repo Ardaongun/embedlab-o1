@@ -9,3 +9,7 @@ const base = BaseRepository(COLLECTION_NAME);
 export const createTagDB = withErrorHandling(base.insertOne);
 
 export const getAllTagsDB = withErrorHandling(base.findAll);
+
+export const getTagByIdDB = withErrorHandling(base.findById);
+
+export const updateTagByIdDB = withErrorHandling(base.updateById);
