@@ -7,3 +7,5 @@ const COLLECTION_NAME = "organizations";
 const base = BaseRepository(COLLECTION_NAME);
 
 export const createTagDB = withErrorHandling(base.insertOne);
+
+export const getAllTagsDB = withErrorHandling(base.findAll);

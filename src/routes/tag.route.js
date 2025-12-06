@@ -5,6 +5,8 @@ import { ROLES } from "../config/role.config.js";
 
 const router = express.Router();
 
+router.get("/get-tags", tagController.getTagsByOrganizationHandler);
+
 router.post(
   "/create-tag",
   authorizeMiddleware(ROLES.ORGANIZATION),

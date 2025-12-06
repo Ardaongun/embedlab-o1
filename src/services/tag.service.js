@@ -1,5 +1,5 @@
 import { getOrganizationByIdDB } from "../repositories/organizations.repository.js";
-import { createTagDB } from "../repositories/tags.repository.js";
+import { createTagDB, getAllTagsDB } from "../repositories/tags.repository.js";
 import ApiError from "../utils/apiError.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
@@ -22,3 +22,17 @@ export const createTag = withErrorHandling(async (name, organizationId) => {
 
   return res;
 });
+
+export const getTagsByOrganization = withErrorHandling(
+  async (organizationId) => {
+    const existingOrg = await getOrganizationByIdDB(organizationId, { _id: 1 });
+    if (!existingOrg) {
+      throw ApiError.badRequest("Organization does not exist.");
+    }
+
+    const tags = await getAllTagsDB({
+      filter: { organizationId },
+    });
+    return tags;
+  }
+);
