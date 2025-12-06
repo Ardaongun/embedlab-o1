@@ -15,6 +15,48 @@ import { withErrorHandling } from "../utils/errorHandler.js";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 
+export const refresh = withErrorHandling(async (refreshToken) => {
+  const [lookupKey, secretKey] = refreshToken.split(".");
+  if(!lookupKey || !secretKey) {
+    throw ApiError.unauthorized("Invalid token format.");
+  }
+
+  const user = await getOneUserDB({ lookupKey });
+  if(!user){
+    throw ApiError.unauthorized("Invalid refresh token.");
+  }
+
+  const isValid = await bcrypt.compare(secretKey, user.refreshToken);
+  if(!isValid){
+    throw ApiError.unauthorized("Invalid refresh token.");
+  }
+
+  if(user.refreshTokenExpiry < new Date()){
+    throw ApiError.unauthorized("Refresh token has expired.");
+  }
+
+  const payload = {
+    email: user.email,
+    role: user.role,
+    organizationId: user.organizationId,
+  };
+  const accessToken = generateAccessToken(payload, "15m");
+  const {
+    refreshToken: newRefreshToken,
+    lookupKey: newLookupKey,
+    hashedSecret,
+  } = await generateRefreshToken();
+  const refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  await updateUserByIdDB(user._id, {
+    lookupKey: newLookupKey,
+    refreshToken: hashedSecret,
+    refreshTokenExpiry,
+  })
+
+  return { accessToken, refreshToken: newRefreshToken };
+})
+
 export const login = withErrorHandling(async (email, password) => {
   const user = await getOneUserDB({ email });
   if (!user) {
