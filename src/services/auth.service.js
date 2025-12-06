@@ -129,3 +129,32 @@ export const registerOrganization = withErrorHandling(
     await createUserDB(newUser);
   }
 );
+
+export const register = withErrorHandling(
+  async (email, password, organizationId) => {
+    const existingUser = await getOneUserDB({ email }, { _id: 1 });
+    if (existingUser) {
+      throw ApiError.badRequest("Email is already registered.");
+    }
+
+    const existingOrg = await getOrganizationByIdDB(organizationId, { _id: 1 });
+    if (!existingOrg) {
+      throw ApiError.badRequest("Organization does not exist.");
+    }
+
+    const newUser = {
+      _id: uuidv4(),
+      email,
+      password: await bcrypt.hash(password, 10),
+      role: ROLES.USER,
+      organizationId,
+      lookupKey: null,
+      refreshToken: null,
+      refreshTokenExpiry: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    await createUserDB(newUser);
+  }
+);
