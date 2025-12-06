@@ -1,4 +1,4 @@
-import { createOrganizationDB, getAllOrganizationsDB } from "../repositories/organization.repository.js";
+import { createOrganizationDB, getAllOrganizationsDB } from "../repositories/organizations.repository.js";
 import ApiError from "../utils/apiError.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
