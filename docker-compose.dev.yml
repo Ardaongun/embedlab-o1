@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+
+
+  mongo:
+    image: mongo:6
+    container_name: embed-mongo-dev
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    volumes:
+      - embed-mongo_dev_data:/data/db
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: embed-api-dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env.dev
+    depends_on:
+      - mongo
+
+volumes:
+  embed-mongo_dev_data:
