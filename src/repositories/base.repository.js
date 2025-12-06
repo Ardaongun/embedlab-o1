@@ -1,18 +1,21 @@
 import { getDb } from "../config/database.config.js";
 
 export const BaseRepository = (collectionName) => ({
-  
-  findAll: async ({ filter = {}, projection = null, sort = { _id: -1 } } = {}) => {
+  findAll: async ({
+    filter = {},
+    projection = null,
+    sort = { _id: -1 },
+  } = {}) => {
     const db = await getDb();
     const data = await db
       .collection(collectionName)
       .find(filter, { projection })
       .sort(sort)
       .toArray();
-  
+
     return data;
   },
-  
+
   findMany: async ({
     filter = {},
     projection = null,
@@ -81,11 +84,18 @@ export const BaseRepository = (collectionName) => ({
       .updateOne({ _id: id }, { $inc: { [field]: amount } });
   },
 
-  getAll: async (projection = null) => {
+  deleteById: async (id) => {
     const db = await getDb();
-    return await db
-      .collection(collectionName)
-      .find({}, projection ? { projection } : {})
-      .toArray();
+    return await db.collection(collectionName).deleteOne({ _id: id });
+  },
+
+  deleteOne: async (filter) => {
+    const db = await getDb();
+    return await db.collection(collectionName).deleteOne(filter);
+  },
+
+  deleteMany: async (filter) => {
+    const db = await getDb();
+    return await db.collection(collectionName).deleteMany(filter);
   },
 });
