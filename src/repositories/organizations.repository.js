@@ -9,3 +9,5 @@ const base = BaseRepository(COLLECTION_NAME);
 export const createOrganizationDB = withErrorHandling(base.insertOne);
 
 export const getAllOrganizationsDB = withErrorHandling(base.findAll);
+
+export const getOrganizationByIdDB = withErrorHandling(base.findById);
