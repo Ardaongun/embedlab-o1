@@ -7,3 +7,7 @@ const COLLECTION_NAME = "items";
 const base = BaseRepository(COLLECTION_NAME);
 
 export const createItemDB = withErrorHandling(base.insertOne);
+
+export const getItemByIdDB = withErrorHandling(base.findById);
+
+export const updateItemByIdDB = withErrorHandling(base.updateById);
