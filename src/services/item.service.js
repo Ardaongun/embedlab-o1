@@ -11,6 +11,17 @@ import ApiError from "../utils/apiError.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
 
+/**
+ * Creates a new item in the system
+ * @param {string} userId - The ID of the user creating the item
+ * @param {string} organizationId - The ID of the organization
+ * @param {string} name - The name of the item
+ * @param {string} description - The description of the item
+ * @param {number} [value] - The value of the item (defaults to 0)
+ * @param {string[]} [tags] - Array of tag IDs to associate with the item
+ * @returns {Promise<Object>} The created item object
+ * @throws {ApiError} If organization, user, or tags don't exist
+ */
 export const createItem = withErrorHandling(
   async (userId, organizationId, name, description, value, tags) => {
     const existingOrg = await getOrganizationByIdDB(organizationId, { _id: 1 });
@@ -61,16 +72,19 @@ export const addItemPhoto = withErrorHandling(
   async (userId, organizationId, itemId, fileUrl) => {
     const item = await getItemByIdDB(itemId);
     if (!item) {
+      deleteFile(fileUrl);
       throw ApiError.notFound("Item not found.");
     }
 
     if (item.organizationId !== organizationId) {
+      deleteFile(fileUrl);
       throw ApiError.forbidden(
         "You do not have permission to modify this item."
       );
     }
 
     if (item.createdBy !== userId) {
+      deleteFile(fileUrl);
       throw ApiError.forbidden(
         "You do not have permission to modify this item."
       );

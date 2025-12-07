@@ -1,3 +1,4 @@
+import { deleteFile } from "../helpers/file.helper.js";
 import {
   addItemPhoto,
   createItem,
@@ -29,11 +30,12 @@ export const addItemHandler = withErrorHandling(async (req, res) => {
 });
 
 export const addItemPhotoHandler = withErrorHandling(async (req, res) => {
+  const fileUrl = req.fileName;
   const { itemId } = req.body;
   if (!itemId) {
+    deleteFile(fileUrl);
     return Response.badRequest("Item ID is required").send(res);
   }
-  const fileUrl = req.fileName;
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
 

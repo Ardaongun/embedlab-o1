@@ -4,6 +4,7 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 
 const accessSecret = CONFIGS.ACCESS_SECRET;
+const urlSecret = CONFIGS.URL_SECRET;
 
 export const generateAccessToken = (payload, expiresIn = "60m") => {
   return jwt.sign(payload, accessSecret, { expiresIn });
