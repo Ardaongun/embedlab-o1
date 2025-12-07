@@ -11,9 +11,7 @@ export const addItemHandler = withErrorHandling(async (req, res) => {
   const { name, description, value, tags } = req.body;
 
   if (!name || !description) {
-    return Response.badRequest(res, "Name and description are required.").send(
-      res
-    );
+    return Response.badRequest("Name and description are required.").send(res);
   }
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
