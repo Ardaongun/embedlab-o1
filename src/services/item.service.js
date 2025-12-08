@@ -333,6 +333,15 @@ export const addItemPhoto = withErrorHandling(
   }
 );
 
+/**
+ * Deletes a photo from an item
+ * @param {string} userId - The ID of the user deleting the photo
+ * @param {string} organizationId - The ID of the organization
+ * @param {string} itemId - The ID of the item containing the photo
+ * @param {string} photoId - The ID of the photo to delete
+ * @returns {Promise<void>}
+ * @throws {ApiError} If item or photo not found, or user lacks permission
+ */
 export const deleteItemPhoto = withErrorHandling(
   async (userId, organizationId, itemId, photoId) => {
     const item = await getItemByIdDB(itemId);
