@@ -306,6 +306,15 @@ export const createItem = withErrorHandling(
   }
 );
 
+/**
+ * Adds a photo to an existing item
+ * @param {string} userId - The ID of the user adding the photo
+ * @param {string} organizationId - The ID of the organization
+ * @param {string} itemId - The ID of the item to add the photo to
+ * @param {string} fileUrl - The file path/URL of the uploaded photo
+ * @returns {Promise<void>}
+ * @throws {ApiError} If item not found or user lacks permission
+ */
 export const addItemPhoto = withErrorHandling(
   async (userId, organizationId, itemId, fileUrl) => {
     const item = await getItemByIdDB(itemId);
