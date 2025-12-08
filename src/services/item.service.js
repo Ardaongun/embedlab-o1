@@ -110,6 +110,19 @@ const populateItemsDetails = withErrorHandling(async (items) => {
   return populatedItems;
 });
 
+/**
+ * Retrieves multiple items based on filter criteria
+ * @param {string} organizationId - The ID of the organization
+ * @param {string} userId - The ID of the user requesting the items
+ * @param {string[]} [tags] - Optional array of tag IDs to filter by
+ * @param {string} [searchTerm] - Optional search term to filter by name or description
+ * @param {string} [sort] - Sort order: 'newest', 'oldest', 'a-z', or 'z-a'
+ * @param {string} [onlyOwn] - Filter to show only user's own items ('true'/'false')
+ * @param {number} [page] - Page number for pagination
+ * @param {number} [limit] - Number of items per page
+ * @returns {Promise<Object>} Object containing items array and pagination info
+ * @throws {ApiError} If organization or user don't exist
+ */
 export const getItems = withErrorHandling(
   async (
     organizationId,
