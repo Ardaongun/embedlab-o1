@@ -13,17 +13,55 @@ import ApiError from "../utils/apiError.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
 
+const uniq = (arr) => [...new Set(arr)];
+const makeMapById = (arr) => {
+  const m = new Map();
+  for (const item of arr || []) {
+    if (item && item._id != null) m.set(item._id, item);
+  }
+  return m;
+};
+
+const populateItemDetails = withErrorHandling(async (item) => {
+  const tagIds = uniq(item.tags || []);
+
+  const tags = tagIds.length
+    ? await getAllTagsDB({
+        filter: { _id: { $in: tagIds } },
+        projection: { _id: 1, name: 1 },
+      })
+    : [];
+  const tagMap = makeMapById(tags);
+
+  const resolvedTags = Array.isArray(item.tags)
+    ? item.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean)
+    : [];
+
+  const imagesWithUrl = Array.isArray(item.images)
+    ? item.images.map((image) => ({
+        id: image.id,
+        url: generateSecureUrlToken(image.url),
+        uploadedAt: image.uploadedAt,
+      }))
+    : [];
+
+  const populatedItem = {
+    _id: item._id,
+    name: item.name,
+    description: item.description,
+    value: item.value,
+    images: imagesWithUrl,
+    tags: resolvedTags,
+    createdBy: item.createdBy,
+    createdAt: item.createdAt,
+    updatedAt: item.updatedAt,
+  };
+
+  return populatedItem;
+});
+
 const populateItemsDetails = withErrorHandling(async (items) => {
   if (!items || items.length === 0) return [];
-
-  const uniq = (arr) => [...new Set(arr)];
-  const makeMapById = (arr) => {
-    const m = new Map();
-    for (const item of arr || []) {
-      if (item && item._id != null) m.set(item._id, item);
-    }
-    return m;
-  };
 
   const allTagIds = uniq(
     items
@@ -32,7 +70,10 @@ const populateItemsDetails = withErrorHandling(async (items) => {
   );
 
   const tags = allTagIds.length
-    ? await getAllTagsDB({ filter: { _id: { $in: allTagIds } } })
+    ? await getAllTagsDB({
+        filter: { _id: { $in: allTagIds } },
+        projection: { _id: 1, name: 1 },
+      })
     : [];
   const tagMap = makeMapById(tags);
 
@@ -150,6 +191,48 @@ export const getItems = withErrorHandling(
     const items = await populateItemsDetails(data);
 
     return { items, pagination };
+  }
+);
+
+/**
+ * Retrieves an item by its ID
+ * @param {string} organizationId - The ID of the organization
+ * @param {string} userId - The ID of the user creating the item
+ * @returns {Promise<Object>}  The item object
+ * @throws {ApiError} If organization, user, or tags don't exist
+ */
+export const getItemById = withErrorHandling(
+  async (organizationId, userId, itemId) => {
+    const [existingOrg, existingUser] = await Promise.all([
+      getOrganizationByIdDB(organizationId, { _id: 1 }),
+      getUserByIdDB(userId, { _id: 1 }),
+    ]);
+
+    if (!existingOrg) {
+      throw ApiError.notFound("Organization does not exist.");
+    }
+
+    if (!existingUser) {
+      throw ApiError.notFound("User does not exist.");
+    }
+
+    const item = await getItemByIdDB(itemId, {
+      _id: 1,
+      name: 1,
+      description: 1,
+      value: 1,
+      images: 1,
+      organizationId: 1,
+      tags: 1,
+      createdBy: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    });
+    if (!item || item.organizationId !== organizationId) {
+      throw ApiError.notFound("Item does not exist.");
+    }
+    const populatedItem = await populateItemDetails(item);
+    return populatedItem;
   }
 );
 

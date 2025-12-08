@@ -12,6 +12,12 @@ router.get(
   itemController.getItemsHandler
 );
 
+router.get(
+  "/get-item/:itemId",
+  authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  itemController.getItemByIdHandler
+);
+
 router.post(
   "/add-item",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),

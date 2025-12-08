@@ -3,10 +3,22 @@ import {
   addItemPhoto,
   createItem,
   deleteItemPhoto,
+  getItemById,
   getItems,
 } from "../services/item.service.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import Response from "../utils/response.js";
+
+export const getItemByIdHandler = withErrorHandling(async (req, res) => {
+  const organizationId = req.user.organizationId;
+  const userId = req.user.userId;
+  const { itemId } = req.params;
+
+  console.log("Fetching item with ID:", itemId);
+
+  const item = await getItemById(organizationId, userId, itemId);
+  return Response.success(item, "Item retrieved successfully.").send(res);
+});
 
 export const getItemsHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
