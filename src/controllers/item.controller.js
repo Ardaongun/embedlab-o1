@@ -14,7 +14,6 @@ export const getItemByIdHandler = withErrorHandling(async (req, res) => {
   const userId = req.user.userId;
   const { itemId } = req.params;
 
-  console.log("Fetching item with ID:", itemId);
 
   const item = await getItemById(organizationId, userId, itemId);
   return Response.success(item, "Item retrieved successfully.").send(res);
