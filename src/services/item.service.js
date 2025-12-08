@@ -197,7 +197,7 @@ export const getItems = withErrorHandling(
 /**
  * Retrieves an item by its ID
  * @param {string} organizationId - The ID of the organization
- * @param {string} userId - The ID of the user creating the item
+ * @param {string} userId - The ID of the user requesting the item
  * @returns {Promise<Object>}  The item object
  * @throws {ApiError} If organization, user, or tags don't exist
  */
