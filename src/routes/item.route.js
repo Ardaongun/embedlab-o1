@@ -6,6 +6,12 @@ import { fileUploadMiddleware } from "../middlewares/fileUpload.middleware.js";
 
 const router = express.Router();
 
+router.get(
+  "/get-items",
+  authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  itemController.getItemsHandler
+);
+
 router.post(
   "/add-item",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),

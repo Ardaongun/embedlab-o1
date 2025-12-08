@@ -3,9 +3,28 @@ import {
   addItemPhoto,
   createItem,
   deleteItemPhoto,
+  getItems,
 } from "../services/item.service.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import Response from "../utils/response.js";
+
+export const getItemsHandler = withErrorHandling(async (req, res) => {
+  const organizationId = req.user.organizationId;
+  const userId = req.user.userId;
+  const { page = 1, limit = 10, tags, searchTerm, sort, onlyOwn } = req.query;
+
+  const items = await getItems(
+    organizationId,
+    userId,
+    tags,
+    searchTerm,
+    sort,
+    onlyOwn,
+    parseInt(page),
+    parseInt(limit)
+  );
+  return Response.success(items, "Items retrieved successfully.").send(res);
+});
 
 export const addItemHandler = withErrorHandling(async (req, res) => {
   const { name, description, value, tags } = req.body;

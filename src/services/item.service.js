@@ -1,7 +1,9 @@
 import { deleteFile } from "../helpers/file.helper.js";
+import { generateSecureUrlToken } from "../helpers/token.helper.js";
 import {
   createItemDB,
   getItemByIdDB,
+  getItemsDB,
   updateItemByIdDB,
 } from "../repositories/items.repository.js";
 import { getOrganizationByIdDB } from "../repositories/organizations.repository.js";
@@ -10,6 +12,146 @@ import { getUserByIdDB } from "../repositories/users.repository.js";
 import ApiError from "../utils/apiError.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
+
+const populateItemsDetails = withErrorHandling(async (items) => {
+  if (!items || items.length === 0) return [];
+
+  const uniq = (arr) => [...new Set(arr)];
+  const makeMapById = (arr) => {
+    const m = new Map();
+    for (const item of arr || []) {
+      if (item && item._id != null) m.set(item._id, item);
+    }
+    return m;
+  };
+
+  const allTagIds = uniq(
+    items
+      .flatMap((item) => (Array.isArray(item.tags) ? item.tags : []))
+      .filter((v) => v != null)
+  );
+
+  const tags = allTagIds.length
+    ? await getAllTagsDB({ filter: { _id: { $in: allTagIds } } })
+    : [];
+  const tagMap = makeMapById(tags);
+
+  const populatedItems = items.map((item) => {
+    const resolvedTags = Array.isArray(item.tags)
+      ? item.tags.map((tagId) => tagMap.get(tagId)).filter(Boolean)
+      : [];
+
+    const image =
+      Array.isArray(item.images) && item.images.length > 0
+        ? item.images[0]
+        : null;
+
+    const imageWithUrl = image
+      ? {
+          id: image.id,
+          url: generateSecureUrlToken(image.url),
+          uploadedAt: image.uploadedAt,
+        }
+      : null;
+
+    return {
+      _id: item._id,
+      name: item.name,
+      description: item.description,
+      value: item.value,
+      image: imageWithUrl,
+      tags: resolvedTags,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+    };
+  });
+
+  return populatedItems;
+});
+
+export const getItems = withErrorHandling(
+  async (
+    organizationId,
+    userId,
+    tags,
+    searchTerm,
+    sort,
+    onlyOwn,
+    page,
+    limit
+  ) => {
+    const [existingOrg, existingUser] = await Promise.all([
+      getOrganizationByIdDB(organizationId, { _id: 1 }),
+      getUserByIdDB(userId, { _id: 1 }),
+    ]);
+
+    if (!existingOrg) {
+      throw ApiError.notFound("Organization does not exist.");
+    }
+
+    if (!existingUser) {
+      throw ApiError.notFound("User does not exist.");
+    }
+
+    const filter = { organizationId };
+
+    if (onlyOwn === "true") {
+      filter.createdBy = userId;
+    }
+
+    if (tags && Array.isArray(tags) && tags.length > 0) {
+      filter.tags = { $in: tags };
+    }
+
+    if (searchTerm) {
+      filter.$or = [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { description: { $regex: searchTerm, $options: "i" } },
+      ];
+    }
+
+    let sortOption = {};
+    switch (sort) {
+      case "newest":
+        sortOption = { createdAt: -1 };
+        break;
+      case "oldest":
+        sortOption = { createdAt: 1 };
+        break;
+      case "a-z":
+        sortOption = { name: 1 };
+        break;
+      case "z-a":
+        sortOption = { name: -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+        break;
+    }
+
+    const projection = {
+      _id: 1,
+      name: 1,
+      description: 1,
+      value: 1,
+      images: { $slice: 1 },
+      tags: 1,
+      createdAt: 1,
+      updatedAt: 1,
+    };
+
+    const { data, pagination } = await getItemsDB({
+      filter,
+      projection,
+      page,
+      limit,
+      sort: sortOption,
+    });
+    const items = await populateItemsDetails(data);
+
+    return { items, pagination };
+  }
+);
 
 /**
  * Creates a new item in the system
@@ -128,7 +270,7 @@ export const deleteItemPhoto = withErrorHandling(
     }
 
     const newImages = item.images.filter((image) => image.id !== photoId);
-    deleteFile(item.images.find((img) => img.id === photoId).url)
+    deleteFile(item.images.find((img) => img.id === photoId).url);
     await updateItemByIdDB(itemId, {
       images: newImages,
       updatedAt: new Date(),

@@ -11,3 +11,5 @@ export const createItemDB = withErrorHandling(base.insertOne);
 export const getItemByIdDB = withErrorHandling(base.findById);
 
 export const updateItemByIdDB = withErrorHandling(base.updateById);
+
+export const getItemsDB = withErrorHandling(base.findMany);
