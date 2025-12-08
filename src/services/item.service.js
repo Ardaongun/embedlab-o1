@@ -352,11 +352,15 @@ export const deleteItemPhoto = withErrorHandling(
       );
     }
 
+    const imageToDelete = item.images.find((img) => img.id === photoId);
+    if (!imageToDelete) {
+      throw ApiError.notFound("Photo not found.");
+    }
     const newImages = item.images.filter((image) => image.id !== photoId);
-    deleteFile(item.images.find((img) => img.id === photoId).url);
     await updateItemByIdDB(itemId, {
       images: newImages,
       updatedAt: new Date(),
     });
+    deleteFile(imageToDelete.url);
   }
 );
