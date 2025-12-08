@@ -69,6 +69,7 @@ export const login = withErrorHandling(async (email, password) => {
 
   const payload = {
     email: user.email,
+    userId: user._id,
     role: user.role,
     organizationId: user.organizationId,
   };
