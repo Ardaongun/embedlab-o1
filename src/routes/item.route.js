@@ -31,6 +31,12 @@ router.post(
   itemController.addItemPhotoHandler
 );
 
+router.patch(
+  "/update-item/:itemId",
+  authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  itemController.updateItemByIdHandler
+);
+
 router.delete(
   "/delete-item-photo/:photoId",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),

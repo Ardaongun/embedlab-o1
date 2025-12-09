@@ -6,6 +6,7 @@ import {
   deleteItemPhoto,
   getItemById,
   getItems,
+  updateItemById,
 } from "../services/item.service.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import Response from "../utils/response.js";
@@ -18,13 +19,12 @@ export const deleteItemByIdHandler = withErrorHandling(async (req, res) => {
 
   await deleteItemById(organizationId, userId, itemId);
   return Response.success(null, "Item deleted successfully.").send(res);
-})
+});
 
 export const getItemByIdHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
   const { itemId } = req.params;
-
 
   const item = await getItemById(organizationId, userId, itemId);
   return Response.success(item, "Item retrieved successfully.").send(res);
@@ -46,6 +46,28 @@ export const getItemsHandler = withErrorHandling(async (req, res) => {
     parseInt(limit)
   );
   return Response.success(items, "Items retrieved successfully.").send(res);
+});
+
+export const updateItemByIdHandler = withErrorHandling(async (req, res) => {
+  const organizationId = req.user.organizationId;
+  const userId = req.user.userId;
+  const { name, description, value, tags } = req.body;
+  const { itemId } = req.params;
+
+  if (!itemId) {
+    return Response.badRequest("Item ID is required.").send(res);
+  }
+
+  await updateItemById(
+    organizationId,
+    userId,
+    itemId,
+    name,
+    description,
+    value,
+    tags
+  );
+  return Response.success(null, "Item updated successfully").send(res);
 });
 
 export const addItemHandler = withErrorHandling(async (req, res) => {
