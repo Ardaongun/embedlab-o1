@@ -37,4 +37,10 @@ router.delete(
   itemController.deleteItemPhotoHandler
 );
 
+router.delete(
+  "/delete-item/:itemId",
+  authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  itemController.deleteItemByIdHandler
+);
+
 export default router;

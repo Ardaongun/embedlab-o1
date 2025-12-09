@@ -2,12 +2,23 @@ import { deleteFile } from "../helpers/file.helper.js";
 import {
   addItemPhoto,
   createItem,
+  deleteItemById,
   deleteItemPhoto,
   getItemById,
   getItems,
 } from "../services/item.service.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import Response from "../utils/response.js";
+
+export const deleteItemByIdHandler = withErrorHandling(async (req, res) => {
+  const organizationId = req.user.organizationId;
+  const userId = req.user.userId;
+
+  const { itemId } = req.params;
+
+  await deleteItemById(organizationId, userId, itemId);
+  return Response.success(null, "Item deleted successfully.").send(res);
+})
 
 export const getItemByIdHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
