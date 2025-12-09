@@ -442,3 +442,67 @@ export const deleteItemById = withErrorHandling(
     await deleteItemByIdDB(itemId);
   }
 );
+
+export const updateItemById = withErrorHandling(
+  async (organizationId, userId, itemId, name, description, value, tags) => {
+    const [existingOrg, existingUser] = await Promise.all([
+      getOrganizationByIdDB(organizationId, { _id: 1 }),
+      getUserByIdDB(userId, { _id: 1 }),
+    ]);
+
+    if (!existingOrg) {
+      throw ApiError.notFound("Organization does not exist.");
+    }
+
+    if (!existingUser) {
+      throw ApiError.notFound("User does not exist.");
+    }
+
+    const item = await getItemByIdDB(itemId);
+    if (!item) {
+      throw ApiError.notFound("Item not found.");
+    }
+
+    if (item.organizationId !== organizationId || item.createdBy !== userId) {
+      throw ApiError.forbidden(
+        "You do not have permission to update this item."
+      );
+    }
+
+    let finalTags = item.tags;
+    if (tags !== undefined) {
+      if (Array.isArray(tags) && tags.length === 0) {
+        finalTags = [];
+      } else if (Array.isArray(tags) && tags.length > 0) {
+        const foundTags = await getAllTagsDB({
+          filter: { _id: { $in: tags }, organizationId },
+        });
+
+        if (foundTags.length !== tags.length) {
+          throw ApiError.notFound(
+            "One or more tags do not exist in the organization."
+          );
+        }
+
+        finalTags = tags;
+      }
+    }
+
+    const rawData = {
+      name,
+      description,
+      value,
+      tags: finalTags,
+      updatedAt: new Date(),
+    };
+    const updateData = {};
+
+    Object.entries(rawData).forEach(([key, value]) => {
+      if (value !== undefined) {
+        updateData[key] = value;
+      }
+    });
+
+    await updateItemByIdDB(itemId, updateData);
+  }
+);
