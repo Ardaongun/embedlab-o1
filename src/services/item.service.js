@@ -2,6 +2,7 @@ import { deleteFile } from "../helpers/file.helper.js";
 import { generateSecureUrlToken } from "../helpers/token.helper.js";
 import {
   createItemDB,
+  deleteItemByIdDB,
   getItemByIdDB,
   getItemsDB,
   updateItemByIdDB,
@@ -262,12 +263,14 @@ export const getItemById = withErrorHandling(
  */
 export const createItem = withErrorHandling(
   async (userId, organizationId, name, description, value, tags) => {
-    const existingOrg = await getOrganizationByIdDB(organizationId, { _id: 1 });
+    const [existingOrg, existingUser] = await Promise.all([
+      getOrganizationByIdDB(organizationId, { _id: 1 }),
+      getUserByIdDB(userId, { _id: 1 }),
+    ]);
     if (!existingOrg) {
       throw ApiError.notFound("Organization does not exist.");
     }
 
-    const existingUser = await getUserByIdDB(userId, { _id: 1 });
     if (!existingUser) {
       throw ApiError.notFound("User does not exist.");
     }
@@ -393,5 +396,49 @@ export const deleteItemPhoto = withErrorHandling(
       updatedAt: new Date(),
     });
     deleteFile(imageToDelete.url);
+  }
+);
+
+/**
+ * Deletes an item by its ID
+ * @param {string} organizationId - The ID of the organization
+ * @param {string} userId - The ID of the user requesting the deletion
+ * @param {string} itemId - The ID of the item to delete
+ * @returns {Promise<void>}
+ * @throws {ApiError} If organization, user, or item don't exist, or user lacks permission
+ */
+export const deleteItemById = withErrorHandling(
+  async (organizationId, userId, itemId) => {
+    const [existingOrg, existingUser] = await Promise.all([
+      getOrganizationByIdDB(organizationId, { _id: 1 }),
+      getUserByIdDB(userId, { _id: 1 }),
+    ]);
+
+    if (!existingOrg) {
+      throw ApiError.notFound("Organization does not exist.");
+    }
+
+    if (!existingUser) {
+      throw ApiError.notFound("User does not exist.");
+    }
+
+    const item = await getItemByIdDB(itemId);
+    if (!item || item.organizationId !== organizationId) {
+      throw ApiError.notFound("Item does not exist.");
+    }
+
+    if (item.createdBy !== userId) {
+      throw ApiError.forbidden(
+        "You do not have permission to delete this item."
+      );
+    }
+
+    if (Array.isArray(item.images)) {
+      for (const image of item.images) {
+        deleteFile(image.url);
+      }
+    }
+
+    await deleteItemByIdDB(itemId);
   }
 );
