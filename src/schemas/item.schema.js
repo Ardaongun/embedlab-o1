@@ -81,3 +81,76 @@ export const addItemSchema = {
       })
   }),
 };
+
+export const addItemPhotoSchema = {
+  body: Joi.object({
+    itemId: Joi.string()
+      .required()
+      .messages({
+        "any.required": "itemId is required.",
+        "string.base": "itemId must be a string.",
+      }),
+  }),
+};
+
+export const updateItemByIdSchema = {
+  params: Joi.object({
+    itemId: Joi.string()
+      .required()
+      .messages({
+        "any.required": "itemId is required.",
+        "string.base": "itemId must be a string.",
+      }),
+  }),
+
+  body: Joi.object({
+    name: Joi.string().optional(),
+
+    description: Joi.string().optional(),
+
+    value: Joi.number()
+      .optional()
+      .messages({
+        "number.base": "Value must be a number.",
+      }),
+
+    tags: Joi.array()
+      .items(Joi.string())
+      .optional()
+      .messages({
+        "array.base": "Tags must be an array.",
+        "string.base": "Each tag must be a string.",
+      }),
+  }).min(1)
+};
+
+export const deleteItemPhotoSchema = {
+  params: Joi.object({
+    photoId: Joi.string()
+      .required()
+      .messages({
+        "any.required": "photoId is required.",
+        "string.base": "photoId must be a string.",
+      }),
+  }),
+
+  body: Joi.object({
+    itemId: Joi.string()
+      .required()
+      .messages({
+        "any.required": "itemId is required.",
+        "string.base": "itemId must be a string.",
+      }),
+  }),
+};
+
+export const deleteItemByIdSchema = {
+  params: Joi.object({
+    itemId: Joi.string()
+      .required()
+      .messages({
+        "any.required": "itemId is required.",
+        "string.base": "itemId must be a string.",
+      }),
+  }),
+};

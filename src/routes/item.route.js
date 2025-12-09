@@ -4,7 +4,7 @@ import { authorizeMiddleware } from "../middlewares/authorize.middleware.js";
 import { ROLES } from "../config/role.config.js";
 import { fileUploadMiddleware } from "../middlewares/fileUpload.middleware.js";
 import { validateRequest } from "../middlewares/validate.middleware.js";
-import { addItemSchema, getItemByIdSchema, getItemsQuerySchema } from "../schemas/item.schema.js";
+import { addItemPhotoSchema, addItemSchema, deleteItemByIdSchema, deleteItemPhotoSchema, getItemByIdSchema, getItemsQuerySchema, updateItemByIdSchema } from "../schemas/item.schema.js";
 
 const router = express.Router();
 
@@ -32,6 +32,7 @@ router.post(
 router.post(
   "/add-item-photo",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  validateRequest(addItemPhotoSchema),
   fileUploadMiddleware,
   itemController.addItemPhotoHandler
 );
@@ -39,18 +40,21 @@ router.post(
 router.patch(
   "/update-item/:itemId",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  validateRequest(updateItemByIdSchema),
   itemController.updateItemByIdHandler
 );
 
 router.delete(
   "/delete-item-photo/:photoId",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  validateRequest(deleteItemPhotoSchema),
   itemController.deleteItemPhotoHandler
 );
 
 router.delete(
   "/delete-item/:itemId",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
+  validateRequest(deleteItemByIdSchema),
   itemController.deleteItemByIdHandler
 );
 

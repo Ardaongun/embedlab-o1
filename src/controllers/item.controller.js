@@ -54,10 +54,6 @@ export const updateItemByIdHandler = withErrorHandling(async (req, res) => {
   const { name, description, value, tags } = req.body;
   const { itemId } = req.params;
 
-  if (!itemId) {
-    return Response.badRequest("Item ID is required.").send(res);
-  }
-
   await updateItemById(
     organizationId,
     userId,
@@ -89,10 +85,6 @@ export const addItemHandler = withErrorHandling(async (req, res) => {
 export const addItemPhotoHandler = withErrorHandling(async (req, res) => {
   const fileUrl = req.fileName;
   const { itemId } = req.body;
-  if (!itemId) {
-    deleteFile(fileUrl);
-    return Response.badRequest("Item ID is required").send(res);
-  }
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
 
@@ -102,14 +94,8 @@ export const addItemPhotoHandler = withErrorHandling(async (req, res) => {
 
 export const deleteItemPhotoHandler = withErrorHandling(async (req, res) => {
   const { photoId } = req.params;
-  if (!photoId) {
-    return Response.badRequest("Photo ID is required").send(res);
-  }
-
   const { itemId } = req.body;
-  if (!itemId) {
-    return Response.badRequest("Item ID is required").send(res);
-  }
+  
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
 
