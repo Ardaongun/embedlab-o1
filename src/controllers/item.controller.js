@@ -94,7 +94,7 @@ export const addItemPhotoHandler = withErrorHandling(async (req, res) => {
 export const deleteItemPhotoHandler = withErrorHandling(async (req, res) => {
   const { photoId } = req.params;
   const { itemId } = req.body;
-  
+
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
 
