@@ -1,4 +1,4 @@
-import Response from "../utils/response";
+import Response from "../utils/response.js";
 
 export const validateRequest = (schema) => {
   return (req, res, next) => {
@@ -9,6 +9,8 @@ export const validateRequest = (schema) => {
     ];
 
     const errors = [];
+
+    req.validated = {};
 
     for (const item of toValidate) {
       if (item.validator) {
@@ -22,7 +24,7 @@ export const validateRequest = (schema) => {
             errors.push(`${item.key}: ${detail.message}`);
           });
         } else {
-          req[item.key] = value;
+          req.validated[item.key] = value;
         }
       }
     }

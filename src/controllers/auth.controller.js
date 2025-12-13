@@ -13,33 +13,33 @@ export const pingHandler = withErrorHandling(async (req, res) => {
 });
 
 export const adminLoginHandler = withErrorHandling(async (req, res) => {
-  const { username, password } = req.body;
+  const { username, password } = req.validated.body;
   const result = await adminLogin(username, password);
   return Response.success(result, "Login successful").send(res);
 });
 
 export const registerOrganizationHandler = withErrorHandling(
   async (req, res) => {
-    const { email, password, organizationId } = req.body;
+    const { email, password, organizationId } = req.validated.body;
     await registerOrganization(email, password, organizationId);
     return Response.noContent().send(res);
   }
 );
 
 export const loginHandler = withErrorHandling(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password } = req.validated.body;
   const result = await login(email, password);
   return Response.success(result, "Login successful").send(res);
 });
 
 export const refreshHandler = withErrorHandling(async (req, res) => {
-  const { refreshToken } = req.body;
+  const { refreshToken } = req.validated.body;
   const result = await refresh(refreshToken);
   return Response.success(result, "Token refreshed successfully").send(res);
 });
 
 export const registerHandler = withErrorHandling(async (req, res) => {
-  const { email, password, organizationId } = req.body;
+  const { email, password, organizationId } = req.validated.body;
 
   if (!email || !password || !organizationId) {
     return Response.badRequest(

@@ -14,7 +14,7 @@ export const deleteItemByIdHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
 
-  const { itemId } = req.params;
+  const { itemId } = req.validated.params;
 
   await deleteItemById(organizationId, userId, itemId);
   return Response.success(null, "Item deleted successfully.").send(res);
@@ -23,7 +23,7 @@ export const deleteItemByIdHandler = withErrorHandling(async (req, res) => {
 export const getItemByIdHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
-  const { itemId } = req.params;
+  const { itemId } = req.validated.params;
 
   const item = await getItemById(organizationId, userId, itemId);
   return Response.success(item, "Item retrieved successfully.").send(res);
@@ -32,7 +32,14 @@ export const getItemByIdHandler = withErrorHandling(async (req, res) => {
 export const getItemsHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
-  const { page = 1, limit = 10, tags, searchTerm, sort, onlyOwn } = req.query;
+  const {
+    page = 1,
+    limit = 10,
+    tags,
+    searchTerm,
+    sort,
+    onlyOwn,
+  } = req.validated.query;
 
   const items = await getItems(
     organizationId,
@@ -50,8 +57,8 @@ export const getItemsHandler = withErrorHandling(async (req, res) => {
 export const updateItemByIdHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
-  const { name, description, value, tags } = req.body;
-  const { itemId } = req.params;
+  const { name, description, value, tags } = req.validated.body;
+  const { itemId } = req.validated.params;
 
   await updateItemById(
     organizationId,
@@ -66,9 +73,9 @@ export const updateItemByIdHandler = withErrorHandling(async (req, res) => {
 });
 
 export const addItemHandler = withErrorHandling(async (req, res) => {
-  const { name, description, value, tags } = req.body;
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
+  const { name, description, value, tags } = req.validated.body;
 
   const createdItem = await createItem(
     userId,
@@ -82,18 +89,18 @@ export const addItemHandler = withErrorHandling(async (req, res) => {
 });
 
 export const addItemPhotoHandler = withErrorHandling(async (req, res) => {
-  const fileUrl = req.fileName;
-  const { itemId } = req.body;
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
+  const { itemId } = req.validated.body;
+  const fileUrl = req.fileName;
 
   await addItemPhoto(userId, organizationId, itemId, fileUrl);
   return Response.success(null, "Item photo added successfully.").send(res);
 });
 
 export const deleteItemPhotoHandler = withErrorHandling(async (req, res) => {
-  const { photoId } = req.params;
-  const { itemId } = req.body;
+  const { photoId } = req.validated.params;
+  const { itemId } = req.validated.body;
 
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
