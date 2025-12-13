@@ -1,4 +1,3 @@
-import { deleteFile } from "../helpers/file.helper.js";
 import {
   addItemPhoto,
   createItem,
