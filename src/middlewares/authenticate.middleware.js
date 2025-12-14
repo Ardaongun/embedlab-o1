@@ -20,7 +20,7 @@ export const authenticateMiddleware = (req, res, next) => {
   try {
     const decoded = verifyAccessToken(token);
     req.user = decoded;
-    req.log.info(
+    req.log.debug(
       { userId: decoded._id || decoded.id },
       "User successfully authenticated."
     );

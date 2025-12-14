@@ -215,8 +215,10 @@ export const register = withErrorHandling(
       throw ApiError.badRequest("Organization does not exist.");
     }
 
+    const newUserId = uuidv4();
+
     const newUser = {
-      _id: uuidv4(),
+      _id: newUserId,
       email,
       password: await bcrypt.hash(password, 10),
       role: ROLES.USER,

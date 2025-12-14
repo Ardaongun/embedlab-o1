@@ -26,6 +26,6 @@ export const withErrorHandling =
       return await fn(...args);
     } catch (error) {
       const currentLogger = getLogger(args);
-      handleError(error);
+      handleError(error, currentLogger);
     }
   };
