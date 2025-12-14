@@ -10,8 +10,23 @@ import { authenticateMiddleware } from "./middlewares/authenticate.middleware.js
 import logger from "./utils/logger.js";
 import { loggerMiddleware } from "./middlewares/logger.middleware.js";
 import { contextMiddleware } from "./middlewares/context.middleware.js";
+import * as Sentry from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
 
 const app = express();
+
+const isProduction = CONFIGS.NodeEnv === "production";
+
+Sentry.init({
+  dsn: CONFIGS.SENTRY_DSN,
+  integrations: [
+    Sentry.httpIntegration(),
+    Sentry.expressIntegration({ app }),
+    nodeProfilingIntegration(),
+  ],
+  tracesSampleRate: isProduction ? 0.1 : 1.0,
+  profilesSampleRate: isProduction ? 0.5 : 1.0,
+});
 
 app.use(cors());
 app.use(cookieParser());
@@ -26,6 +41,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authenticateMiddleware);
 
 app.use("/api", routes);
+
+Sentry.setupExpressErrorHandler(app);
 
 app.use(errorHandlerMiddleware);
 

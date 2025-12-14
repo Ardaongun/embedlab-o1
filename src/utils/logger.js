@@ -1,7 +1,8 @@
 import pino from "pino";
+import { CONFIGS } from "../config/config.js";
 
 const logger = pino({
-  level: process.env.LOG_LEVEL || "info",
+  level: CONFIGS.LOG_LEVEL || "info",
 
   timestamp: pino.stdTimeFunctions.isoTime,
 
@@ -17,7 +18,7 @@ const logger = pino({
 
   transport: {
     targets: [
-      ...(process.env.NODE_ENV === "development"
+      ...(CONFIGS.NodeEnv === "development"
         ? [
             {
               target: "pino-pretty",
@@ -30,22 +31,22 @@ const logger = pino({
           ]
         : []),
 
-      ...(process.env.LOGTAIL_SOURCE_TOKEN
+      ...(CONFIGS.LOGTAIL_SOURCE_TOKEN
         ? [
             {
               target: "@logtail/pino",
               options: {
-                sourceToken: process.env.LOGTAIL_SOURCE_TOKEN,
+                sourceToken: CONFIGS.LOGTAIL_SOURCE_TOKEN,
                 options: {
-                  endpoint: process.env.LOGTAIL_URL,
+                  endpoint: CONFIGS.LOGTAIL_URL,
                 },
               },
             },
           ]
         : []),
 
-      ...(process.env.NODE_ENV !== "development" &&
-      !process.env.LOGTAIL_SOURCE_TOKEN
+      ...(CONFIGS.NodeEnv !== "development" &&
+      !CONFIGS.LOGTAIL_SOURCE_TOKEN
         ? [{ target: "pino/file", options: { destination: 1 } }] // 1 = stdout
         : []),
     ],
