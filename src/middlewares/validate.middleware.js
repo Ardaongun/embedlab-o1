@@ -30,6 +30,13 @@ export const validateRequest = (schema) => {
     }
 
     if (errors.length > 0) {
+      req.log.warn(
+        {
+          validationErrors: errors,
+          schemaScopes: toValidate.filter((i) => i.validator).map((i) => i.key),
+        },
+        "Request validation failed."
+      );
       return Response.badRequest("Invalid request data", errors).send(res);
     }
 

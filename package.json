@@ -12,6 +12,10 @@
     "start": "node src/app.js"
   },
   "dependencies": {
+    "@logtail/node": "^0.5.6",
+    "@logtail/pino": "^0.5.7",
+    "@sentry/node": "^10.30.0",
+    "@sentry/profiling-node": "^10.30.0",
     "axios": "^1.13.2",
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
@@ -25,9 +29,12 @@
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.11",
+    "pino": "^10.1.0",
+    "pino-http": "^11.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "pino-pretty": "^13.1.3"
   }
 }

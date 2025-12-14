@@ -11,6 +11,7 @@ import { getOrganizationByIdDB } from "../repositories/organizations.repository.
 import { getAllTagsDB } from "../repositories/tags.repository.js";
 import { getUserByIdDB } from "../repositories/users.repository.js";
 import ApiError from "../utils/apiError.js";
+import { getLogger } from "../utils/context.js";
 import { withErrorHandling } from "../utils/errorHandler.js";
 import { v4 as uuidv4 } from "uuid";
 
@@ -135,16 +136,31 @@ export const getItems = withErrorHandling(
     page,
     limit
   ) => {
+    const logger = getLogger();
+    logger.debug(
+      {
+        organizationId,
+        userId,
+        filters: { tags, searchTerm, sort, onlyOwn },
+        pagination: { page, limit },
+      },
+      "Items fetch initiated with criteria."
+    );
     const [existingOrg, existingUser] = await Promise.all([
       getOrganizationByIdDB(organizationId, { _id: 1 }),
       getUserByIdDB(userId, { _id: 1 }),
     ]);
 
     if (!existingOrg) {
+      logger.warn(
+        { organizationId },
+        "Fetch items failed: Organization not found."
+      );
       throw ApiError.notFound("Organization does not exist.");
     }
 
     if (!existingUser) {
+      logger.warn({ userId }, "Fetch items failed: User not found.");
       throw ApiError.notFound("User does not exist.");
     }
 
@@ -204,6 +220,16 @@ export const getItems = withErrorHandling(
     });
     const items = await populateItemsDetails(data);
 
+    logger.debug(
+      {
+        resultCount: items.length,
+        totalItems: pagination.totalItems,
+        currentPage: pagination.currentPage,
+        totalPages: pagination.totalPages,
+      },
+      "Items fetched successfully."
+    );
+
     return { items, pagination };
   }
 );
@@ -217,16 +243,26 @@ export const getItems = withErrorHandling(
  */
 export const getItemById = withErrorHandling(
   async (organizationId, userId, itemId) => {
+    const logger = getLogger();
+    logger.debug(
+      { organizationId, userId, itemId },
+      "Item retrieval initiated."
+    );
     const [existingOrg, existingUser] = await Promise.all([
       getOrganizationByIdDB(organizationId, { _id: 1 }),
       getUserByIdDB(userId, { _id: 1 }),
     ]);
 
     if (!existingOrg) {
+      logger.warn(
+        { organizationId },
+        "Item retrieval failed: Organization not found."
+      );
       throw ApiError.notFound("Organization does not exist.");
     }
 
     if (!existingUser) {
+      logger.warn({ userId }, "Item retrieval failed: User not found.");
       throw ApiError.notFound("User does not exist.");
     }
 
@@ -243,9 +279,15 @@ export const getItemById = withErrorHandling(
       updatedAt: 1,
     });
     if (!item || item.organizationId !== organizationId) {
+      logger.warn(
+        { itemId, organizationId },
+        "Item retrieval failed: Item not found or belongs to another organization."
+      );
       throw ApiError.notFound("Item does not exist.");
     }
     const populatedItem = await populateItemDetails(item);
+
+    logger.debug({ itemId }, "Item details retrieved successfully.");
     return populatedItem;
   }
 );
@@ -263,15 +305,26 @@ export const getItemById = withErrorHandling(
  */
 export const createItem = withErrorHandling(
   async (userId, organizationId, name, description, value, tags) => {
+    const logger = getLogger();
+    logger.info(
+      { userId, organizationId, itemName: name },
+      "Item creation process initiated."
+    );
+
     const [existingOrg, existingUser] = await Promise.all([
       getOrganizationByIdDB(organizationId, { _id: 1 }),
       getUserByIdDB(userId, { _id: 1 }),
     ]);
     if (!existingOrg) {
+      logger.warn(
+        { organizationId },
+        "Item creation failed: Organization not found."
+      );
       throw ApiError.notFound("Organization does not exist.");
     }
 
     if (!existingUser) {
+      logger.warn({ userId }, "Item creation failed: User not found.");
       throw ApiError.notFound("User does not exist.");
     }
 
@@ -284,14 +337,23 @@ export const createItem = withErrorHandling(
       });
 
       if (foundTags.length !== tags.length) {
+        logger.warn(
+          {
+            providedTags: tags,
+            foundCount: foundTags.length,
+          },
+          "Item creation failed: One or more tags do not exist in the organization."
+        );
         throw ApiError.notFound(
           "One or more tags do not exist in the organization."
         );
       }
     }
 
+    const newItemId = uuidv4();
+
     const newItem = {
-      _id: uuidv4(),
+      _id: newItemId,
       name,
       description,
       value: value || 0,
@@ -304,6 +366,15 @@ export const createItem = withErrorHandling(
     };
 
     await createItemDB(newItem);
+
+    logger.info(
+      {
+        itemId: newItemId,
+        userId,
+        organizationId,
+      },
+      "Item created successfully."
+    );
 
     return newItem;
   }
@@ -320,13 +391,27 @@ export const createItem = withErrorHandling(
  */
 export const addItemPhoto = withErrorHandling(
   async (userId, organizationId, itemId, fileUrl) => {
+    const logger = getLogger();
+    logger.info({ userId, itemId, fileUrl }, "Item photo addition initiated.");
     const item = await getItemByIdDB(itemId);
     if (!item) {
+      logger.warn(
+        { itemId, fileUrl },
+        "Add photo failed: Item not found. Deleting uploaded file to prevent orphans."
+      );
       deleteFile(fileUrl);
       throw ApiError.notFound("Item not found.");
     }
 
     if (item.organizationId !== organizationId) {
+      logger.warn(
+        {
+          itemId,
+          requestOrg: organizationId,
+          itemOrg: item.organizationId,
+        },
+        "Add photo failed: Organization mismatch. Deleting uploaded file."
+      );
       deleteFile(fileUrl);
       throw ApiError.forbidden(
         "You do not have permission to modify this item."
@@ -334,14 +419,24 @@ export const addItemPhoto = withErrorHandling(
     }
 
     if (item.createdBy !== userId) {
+      logger.warn(
+        {
+          requesterId: userId,
+          ownerId: item.createdBy,
+          itemId,
+        },
+        "Add photo failed: Permission denied (Not owner). Deleting uploaded file."
+      );
       deleteFile(fileUrl);
       throw ApiError.forbidden(
         "You do not have permission to modify this item."
       );
     }
 
+    const imageId = uuidv4();
+
     const itemImage = {
-      id: uuidv4(),
+      id: imageId,
       url: fileUrl,
       uploadedAt: new Date(),
     };
@@ -355,6 +450,11 @@ export const addItemPhoto = withErrorHandling(
       images: item.images,
       updatedAt: new Date(),
     });
+
+    logger.info(
+      { itemId, imageId, fileUrl },
+      "Photo added to item successfully."
+    );
   }
 );
 
@@ -369,18 +469,41 @@ export const addItemPhoto = withErrorHandling(
  */
 export const deleteItemPhoto = withErrorHandling(
   async (userId, organizationId, itemId, photoId) => {
+    const logger = getLogger();
+    logger.info(
+      { userId, itemId, photoId },
+      "Photo deletion process initiated."
+    );
+
     const item = await getItemByIdDB(itemId);
     if (!item) {
+      logger.warn({ itemId, photoId }, "Delete photo failed: Item not found.");
       throw ApiError.notFound("Item not found.");
     }
 
     if (item.organizationId !== organizationId) {
+      logger.warn(
+        {
+          itemId,
+          requestOrg: organizationId,
+          itemOrg: item.organizationId,
+        },
+        "Delete photo failed: Organization mismatch."
+      );
       throw ApiError.forbidden(
         "You do not have permission to modify this item."
       );
     }
 
     if (item.createdBy !== userId) {
+      logger.warn(
+        {
+          requesterId: userId,
+          ownerId: item.createdBy,
+          itemId,
+        },
+        "Delete photo failed: Permission denied (User is not the owner)."
+      );
       throw ApiError.forbidden(
         "You do not have permission to modify this item."
       );
@@ -388,6 +511,10 @@ export const deleteItemPhoto = withErrorHandling(
 
     const imageToDelete = item.images.find((img) => img.id === photoId);
     if (!imageToDelete) {
+      logger.warn(
+        { itemId, photoId }, 
+        "Delete photo failed: Photo ID not found in item."
+      );
       throw ApiError.notFound("Photo not found.");
     }
     const newImages = item.images.filter((image) => image.id !== photoId);
@@ -396,6 +523,15 @@ export const deleteItemPhoto = withErrorHandling(
       updatedAt: new Date(),
     });
     deleteFile(imageToDelete.url);
+
+    logger.info(
+      { 
+        itemId, 
+        photoId, 
+        deletedUrl: imageToDelete.url 
+      }, 
+      "Photo deleted successfully from DB and storage."
+    );
   }
 );
 
@@ -409,61 +545,123 @@ export const deleteItemPhoto = withErrorHandling(
  */
 export const deleteItemById = withErrorHandling(
   async (organizationId, userId, itemId) => {
+    const logger = getLogger();
+    logger.info(
+      { organizationId, userId, itemId },
+      "Item deletion process initiated."
+    );
     const [existingOrg, existingUser] = await Promise.all([
       getOrganizationByIdDB(organizationId, { _id: 1 }),
       getUserByIdDB(userId, { _id: 1 }),
     ]);
 
     if (!existingOrg) {
+      logger.warn(
+        { organizationId },
+        "Item deletion failed: Organization not found."
+      );
       throw ApiError.notFound("Organization does not exist.");
     }
 
     if (!existingUser) {
+      logger.warn({ userId }, "Item deletion failed: User not found.");
       throw ApiError.notFound("User does not exist.");
     }
 
     const item = await getItemByIdDB(itemId);
     if (!item || item.organizationId !== organizationId) {
+      logger.warn(
+        { itemId, organizationId },
+        "Item deletion failed: Item not found or belongs to another organization."
+      );
       throw ApiError.notFound("Item does not exist.");
     }
 
     if (item.createdBy !== userId) {
+      logger.warn(
+        {
+          requesterId: userId,
+          itemOwnerId: item.createdBy,
+          itemId,
+        },
+        "Item deletion failed: Permission denied (User is not the owner)."
+      );
       throw ApiError.forbidden(
         "You do not have permission to delete this item."
       );
     }
 
     if (Array.isArray(item.images)) {
+      logger.debug(
+        { imageCount: item.images.length, itemId },
+        "Deleting associated item images."
+      );
+
       for (const image of item.images) {
         deleteFile(image.url);
       }
     }
 
     await deleteItemByIdDB(itemId);
+
+    logger.info(
+      { itemId, userId, organizationId },
+      "Item deleted successfully."
+    );
   }
 );
 
 export const updateItemById = withErrorHandling(
   async (organizationId, userId, itemId, name, description, value, tags) => {
+    const logger = getLogger();
+
+    const requestedChanges = Object.keys({
+      name,
+      description,
+      value,
+      tags,
+    }).filter(
+      (key) =>
+        [name, description, value, tags].includes(key) && key !== undefined
+    );
+
+    logger.info(
+      { organizationId, userId, itemId, fieldsToUpdate: requestedChanges },
+      "Item update process initiated."
+    );
+
     const [existingOrg, existingUser] = await Promise.all([
       getOrganizationByIdDB(organizationId, { _id: 1 }),
       getUserByIdDB(userId, { _id: 1 }),
     ]);
 
     if (!existingOrg) {
+      logger.warn({ organizationId }, "Update failed: Organization not found.");
       throw ApiError.notFound("Organization does not exist.");
     }
 
     if (!existingUser) {
+      logger.warn({ userId }, "Update failed: User not found.");
       throw ApiError.notFound("User does not exist.");
     }
 
     const item = await getItemByIdDB(itemId);
     if (!item) {
+      logger.warn({ itemId }, "Update failed: Item not found.");
       throw ApiError.notFound("Item not found.");
     }
 
     if (item.organizationId !== organizationId || item.createdBy !== userId) {
+      logger.warn(
+        {
+          requesterId: userId,
+          ownerId: item.createdBy,
+          itemId,
+          requestOrg: organizationId,
+          itemOrg: item.organizationId,
+        },
+        "Update failed: Permission denied (User is not the owner or organization mismatch)."
+      );
       throw ApiError.forbidden(
         "You do not have permission to update this item."
       );
@@ -479,6 +677,10 @@ export const updateItemById = withErrorHandling(
         });
 
         if (foundTags.length !== tags.length) {
+          logger.warn(
+            { providedTags: tags, foundTagsCount: foundTags.length },
+            "Update failed: One or more provided tags do not exist in the organization."
+          );
           throw ApiError.notFound(
             "One or more tags do not exist in the organization."
           );
@@ -504,5 +706,10 @@ export const updateItemById = withErrorHandling(
     });
 
     await updateItemByIdDB(itemId, updateData);
+
+    logger.info(
+      { itemId, updatedFields: Object.keys(updateData) },
+      "Item updated successfully."
+    );
   }
 );
