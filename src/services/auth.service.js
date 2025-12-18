@@ -1,6 +1,7 @@
 import { CONFIGS } from "../config/config.js";
 import { ROLES } from "../config/role.config.js";
 import {
+  buildAccessTokenPayload,
   generateAccessToken,
   generateRefreshToken,
 } from "../helpers/token.helper.js";
@@ -53,11 +54,7 @@ export const refresh = withErrorHandling(async (refreshToken) => {
     throw ApiError.unauthorized("Refresh token has expired.");
   }
 
-  const payload = {
-    email: user.email,
-    role: user.role,
-    organizationId: user.organizationId,
-  };
+  const payload = buildAccessTokenPayload(user);
   const accessToken = generateAccessToken(payload, "15m");
   const {
     refreshToken: newRefreshToken,
@@ -94,12 +91,7 @@ export const login = withErrorHandling(async (email, password) => {
     throw ApiError.badRequest("Email or password is incorrect.");
   }
 
-  const payload = {
-    email: user.email,
-    userId: user._id,
-    role: user.role,
-    organizationId: user.organizationId,
-  };
+  const payload = buildAccessTokenPayload(user);
   const accessToken = generateAccessToken(payload, "15m");
   const { refreshToken, lookupKey, hashedSecret } =
     await generateRefreshToken();

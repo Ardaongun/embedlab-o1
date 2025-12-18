@@ -11,5 +11,6 @@ export const CONFIGS = {
     SENTRY_DSN: process.env.SENTRY_DSN,
     LOG_LEVEL: process.env.LOG_LEVEL,
     LOGTAIL_SOURCE_TOKEN: process.env.LOGTAIL_SOURCE_TOKEN,
-    LOGTAIL_URL: process.env.LOGTAIL_URL
+    LOGTAIL_URL: process.env.LOGTAIL_URL,
+    JWT_ISSUER: "embedlab-o1",
 };

@@ -7,7 +7,7 @@ const accessSecret = CONFIGS.ACCESS_SECRET;
 const urlSecret = CONFIGS.URL_SECRET;
 
 export const generateAccessToken = (payload, expiresIn = "60m") => {
-  return jwt.sign(payload, accessSecret, { expiresIn });
+  return jwt.sign(payload, accessSecret, { expiresIn, issuer: CONFIGS.JWT_ISSUER });
 };
 
 export const generateRefreshToken = async () => {
@@ -32,6 +32,13 @@ export const generateSecureUrlToken = (fileUrl) => {
   return jwt.sign(payload, urlSecret);
 };
 
-export const verifyAccessToken = (token) => jwt.verify(token, accessSecret);
+export const verifyAccessToken = (token) => jwt.verify(token, accessSecret, { issuer: CONFIGS.JWT_ISSUER });
 
 export const verifySecureUrlToken = (token) => jwt.verify(token, urlSecret);
+
+export const buildAccessTokenPayload = (user) => ({
+  userId: user._id,
+  email: user.email,
+  role: user.role,
+  organizationId: user.organizationId
+})
