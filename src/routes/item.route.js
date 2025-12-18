@@ -32,7 +32,7 @@ router.post(
 router.post(
   "/add-item-photo",
   authorizeMiddleware(ROLES.USER, ROLES.ORGANIZATION),
-  validateRequest(addItemPhotoSchema),
+  // validateRequest(addItemPhotoSchema),
   fileUploadMiddleware,
   itemController.addItemPhotoHandler
 );
