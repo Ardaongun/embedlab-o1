@@ -91,7 +91,7 @@ export const addItemHandler = withErrorHandling(async (req, res) => {
 export const addItemPhotoHandler = withErrorHandling(async (req, res) => {
   const organizationId = req.user.organizationId;
   const userId = req.user.userId;
-  const { itemId } = req.validated.body;
+  const { itemId } = req.body;
   const fileUrl = req.fileName;
 
   await addItemPhoto(userId, organizationId, itemId, fileUrl);
